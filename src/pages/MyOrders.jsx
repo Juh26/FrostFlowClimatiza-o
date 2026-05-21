@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 import { Package, Eye } from 'lucide-react'
 
 export default function MyOrders() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -68,14 +70,20 @@ export default function MyOrders() {
           <div className="text-center py-12">
             <Package size={80} className="mx-auto text-gray-400 mb-4" />
             <p className="text-gray-500">Você ainda não fez nenhum pedido.</p>
+            <button 
+              onClick={() => navigate('/store')}
+              className="mt-4 bg-primary text-white px-6 py-2 rounded-lg"
+            >
+              Ir para loja
+            </button>
           </div>
         ) : (
           <div className="space-y-4">
             {orders.map((order) => (
               <div key={order.id} className="bg-white rounded-lg shadow p-6">
-                <div className="flex justify-between items-start mb-4">
+                <div className="flex justify-between items-start flex-wrap gap-4">
                   <div>
-                    <p className="text-sm text-gray-500">Pedido #{order.order_number}</p>
+                    <p className="font-mono text-sm text-gray-500">Pedido #{order.order_number}</p>
                     <p className="text-sm text-gray-500">
                       {new Date(order.created_at).toLocaleDateString('pt-BR')}
                     </p>
@@ -89,7 +97,10 @@ export default function MyOrders() {
                     </p>
                   </div>
                 </div>
-                <button className="text-primary hover:text-primary/80 text-sm flex items-center gap-1">
+                <button 
+                  onClick={() => navigate(`/order-details/${order.order_number}`)}
+                  className="text-primary hover:text-primary/80 text-sm flex items-center gap-1 mt-3"
+                >
                   <Eye size={16} />
                   Ver detalhes
                 </button>

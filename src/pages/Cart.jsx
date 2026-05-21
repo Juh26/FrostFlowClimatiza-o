@@ -212,24 +212,12 @@ export default function Cart() {
                 </div>
               )}
 
-              <button
-                onClick={handleCheckout}
-                disabled={loading || !user}
-                className={`w-full mt-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
-                  loading || !user
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-primary text-white hover:bg-primary/90 shadow-lg hover:shadow-xl'
-                }`}
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Processando...
-                  </>
-                ) : (
-                  'Finalizar compra'
-                )}
-              </button>
+          <button
+  onClick={() => navigate('/checkout')}
+  className="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-primary/90 transition-all"
+>
+  Finalizar compra
+</button>
             </div>
           </div>
         </div>

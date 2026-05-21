@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import AuthForm from '../components/AuthForm'
-import { User, Camera, Mail, Shield, Calendar, Edit2, Phone, MapPin } from 'lucide-react'
+import { User, Camera, Mail, Shield, Calendar, Edit2, Phone, MapPin, Save, X } from 'lucide-react'
 import { motion } from 'framer-motion'
+import Swal from 'sweetalert2'
 
 export default function Profile() {
   const { user, profile, isAdmin, updateAvatar, updateProfile } = useAuth()
@@ -31,9 +32,29 @@ export default function Profile() {
     const file = e.target.files[0]
     if (!file) return
     
+    // Validar tipo de arquivo
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      Swal.fire('Erro', 'Apenas imagens são permitidas (JPEG, PNG, GIF, WEBP).', 'error')
+      return
+    }
+    
+    // Validar tamanho (máximo 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      Swal.fire('Erro', 'A imagem deve ter no máximo 2MB.', 'error')
+      return
+    }
+    
     setUploading(true)
-    await updateAvatar(file)
-    setUploading(false)
+    
+    try {
+      await updateAvatar(file)
+    } catch (error) {
+      console.error('Erro ao fazer upload:', error)
+      Swal.fire('Erro', 'Não foi possível enviar a foto.', 'error')
+    } finally {
+      setUploading(false)
+    }
   }
 
   if (!user) {
@@ -70,13 +91,17 @@ export default function Profile() {
 
           {/* Avatar Section */}
           <div className="flex flex-col items-center -mt-12 mb-6">
-            <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-white p-1 shadow-lg">
+            <div className="relative group">
+              <div className="w-28 h-28 rounded-full bg-white p-1 shadow-lg">
                 {profile?.avatar_url ? (
                   <img
                     src={profile.avatar_url}
                     alt="Avatar"
                     className="w-full h-full rounded-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null
+                      e.target.src = 'https://via.placeholder.com/112?text=User'
+                    }}
                   />
                 ) : (
                   <div className="w-full h-full rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
@@ -87,9 +112,14 @@ export default function Profile() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="absolute bottom-0 right-0 bg-primary text-white p-1.5 rounded-full shadow-lg hover:bg-primary/90 transition-colors"
+                className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                title="Alterar foto"
               >
-                <Camera size={16} />
+                {uploading ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  <Camera size={16} />
+                )}
               </button>
               <input
                 ref={fileInputRef}
@@ -99,7 +129,7 @@ export default function Profile() {
                 className="hidden"
               />
             </div>
-            {uploading && <p className="text-sm text-gray-500 mt-2">Enviando...</p>}
+            {uploading && <p className="text-sm text-gray-500 mt-2">Enviando foto...</p>}
           </div>
 
           {/* Info Cards */}
@@ -123,7 +153,7 @@ export default function Profile() {
                     type="text"
                     value={editForm.name}
                     onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                    className="w-full border rounded px-2 py-1 mt-1"
+                    className="w-full border rounded-lg px-3 py-1.5 mt-1 focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="Seu nome"
                   />
                 ) : (
@@ -142,7 +172,7 @@ export default function Profile() {
                     type="tel"
                     value={editForm.phone}
                     onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                    className="w-full border rounded px-2 py-1 mt-1"
+                    className="w-full border rounded-lg px-3 py-1.5 mt-1 focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="(00) 00000-0000"
                   />
                 ) : (
@@ -161,7 +191,7 @@ export default function Profile() {
                     type="text"
                     value={editForm.address}
                     onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                    className="w-full border rounded px-2 py-1 mt-1"
+                    className="w-full border rounded-lg px-3 py-1.5 mt-1 focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="Seu endereço"
                   />
                 ) : (
@@ -193,14 +223,16 @@ export default function Profile() {
               <div className="flex gap-3 mt-4">
                 <button
                   onClick={handleSaveEdit}
-                  className="flex-1 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90"
+                  className="flex-1 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
                 >
+                  <Save size={18} />
                   Salvar alterações
                 </button>
                 <button
                   onClick={() => setEditing(false)}
-                  className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
+                  className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors flex items-center justify-center gap-2"
                 >
+                  <X size={18} />
                   Cancelar
                 </button>
               </div>
@@ -213,8 +245,11 @@ export default function Profile() {
                 <p className="text-sm text-gray-600">
                   Você tem acesso para gerenciar produtos e pedidos.
                 </p>
-                <button className="mt-3 bg-primary text-white px-4 py-2 rounded-lg text-sm hover:bg-primary/90 transition-colors">
-                  Gerenciar Estoque
+                <button 
+                  onClick={() => window.location.href = '/admin'}
+                  className="mt-3 bg-primary text-white px-4 py-2 rounded-lg text-sm hover:bg-primary/90 transition-colors"
+                >
+                  Ir para Dashboard
                 </button>
               </div>
             )}
