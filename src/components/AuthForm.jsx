@@ -1,130 +1,122 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { Mail, Lock, User, LogIn, UserPlus } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { motion } from 'framer-motion'
 
-export default function AuthForm({ onSuccess }) {
+export default function AuthForm() {
+  const { signIn, signUp } = useAuth()
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [loading, setLoading] = useState(false)
-  const { signUp, signIn } = useAuth()
 
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
-    
+
     let success
     if (isLogin) {
       success = await signIn(email, password)
     } else {
       success = await signUp(email, password, fullName)
     }
-    
+
     setLoading(false)
     
-    if (success && onSuccess) {
-      onSuccess()
+    // Se fez login com sucesso, recarrega a página
+    if (success && isLogin) {
+      window.location.href = '/'
     }
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full"
-    >
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-primary">
-          {isLogin ? 'Bem-vindo de volta!' : 'Criar conta'}
+    <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h2 className="text-2xl font-bold text-center text-dark mb-6">
+          {isLogin ? '🔐 Entrar' : '📝 Criar conta'}
         </h2>
-        <p className="text-gray-500 text-sm mt-1">
-          {isLogin ? 'Faça login para continuar' : 'Cadastre-se para aproveitar'}
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {!isLogin && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nome completo
-            </label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {!isLogin && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nome completo
+              </label>
               <input
                 type="text"
-                required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                 placeholder="Seu nome"
+                required={!isLogin}
               />
             </div>
-          </div>
-        )}
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Email
-          </label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          )}
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
             <input
               type="email"
-              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
               placeholder="seu@email.com"
+              required
             />
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Senha
-          </label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Senha
+            </label>
             <input
               type="password"
-              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
               placeholder="••••••••"
+              required
+              minLength={6}
             />
+            {!isLogin && (
+              <p className="text-xs text-gray-400 mt-1">Mínimo 6 caracteres</p>
+            )}
           </div>
-        </div>
-
+          
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-primary text-white py-2 rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Carregando...
+              </span>
+            ) : (
+              isLogin ? 'Entrar' : 'Cadastrar'
+            )}
+          </button>
+        </form>
+        
         <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          {loading ? (
-            'Carregando...'
-          ) : isLogin ? (
-            <>
-              <LogIn size={18} /> Entrar
-            </>
-          ) : (
-            <>
-              <UserPlus size={18} /> Cadastrar
-            </>
-          )}
-        </button>
-      </form>
-
-      <div className="mt-4 text-center">
-        <button
-          onClick={() => setIsLogin(!isLogin)}
-          className="text-primary hover:underline text-sm"
+          onClick={() => {
+            setIsLogin(!isLogin)
+            setEmail('')
+            setPassword('')
+            setFullName('')
+          }}
+          className="w-full mt-4 text-sm text-primary hover:text-primary/80 transition-colors"
         >
           {isLogin ? 'Não tem conta? Cadastre-se' : 'Já tem conta? Faça login'}
         </button>
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   )
 }
